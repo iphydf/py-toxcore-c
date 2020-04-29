@@ -1,5 +1,5 @@
 ---
-_extends: template
+_extends: .github
 
 repository:
   name: py-toxcore-c
@@ -16,7 +16,5 @@ branches:
           - CodeFactor
           - Docker Build
           - Travis CI - Pull Request
-          - WIP
           - code-review/reviewable
           - coverage/coveralls
-          - license/cla
