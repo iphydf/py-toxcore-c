@@ -1,3 +1,4 @@
+from Cython.Build import cythonize
 import os
 import shlex
 import subprocess  # nosec
@@ -63,10 +64,14 @@ setup(
     author_email="aitjcize@gmail.com",
     url="http://github.com/TokTok/py-toxcore-c",
     license="GPL",
-    ext_modules=[
+    ext_modules=cythonize([
         Extension("pytox",
                   sources,
                   extra_compile_args=cflags,
-                  libraries=libraries)
-    ],
+                  libraries=libraries),
+        Extension("helloworld",
+                  ["pytox/helloworld.pyx"],
+                  extra_compile_args=cflags,
+                  libraries=libraries),
+    ]),
 )
