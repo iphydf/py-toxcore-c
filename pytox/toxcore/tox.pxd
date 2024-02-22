@@ -300,6 +300,7 @@ cdef extern from "tox/tox.h":
         TOX_ERR_GROUP_SEND_CUSTOM_PACKET_EMPTY
         TOX_ERR_GROUP_SEND_CUSTOM_PACKET_PERMISSIONS
         TOX_ERR_GROUP_SEND_CUSTOM_PACKET_DISCONNECTED
+        TOX_ERR_GROUP_SEND_CUSTOM_PACKET_FAIL_SEND
     cpdef enum Tox_Err_Group_Send_Custom_Private_Packet:
         TOX_ERR_GROUP_SEND_CUSTOM_PRIVATE_PACKET_OK
         TOX_ERR_GROUP_SEND_CUSTOM_PRIVATE_PACKET_GROUP_NOT_FOUND
@@ -405,6 +406,7 @@ cdef extern from "tox/tox.h":
     ctypedef uint32_t Tox_Friend_Message_Id
     ctypedef uint32_t Tox_File_Number
     ctypedef uint32_t Tox_Conference_Peer_Number
+    ctypedef uint32_t Tox_Conference_Offline_Peer_Number
     ctypedef uint32_t Tox_Conference_Number
     ctypedef uint32_t Tox_Group_Peer_Number
     ctypedef uint32_t Tox_Group_Number
@@ -476,6 +478,8 @@ cdef extern from "tox/tox.h":
     cdef void tox_options_set_savedata_data(Tox_Options* self, const uint8_t* savedata_data, size_t length)
     cdef bool tox_options_get_experimental_thread_safety(const Tox_Options* self)
     cdef void tox_options_set_experimental_thread_safety(Tox_Options* self, bool experimental_thread_safety)
+    cdef bool tox_options_get_experimental_groups_persistence(const Tox_Options* self)
+    cdef void tox_options_set_experimental_groups_persistence(Tox_Options* self, bool experimental_groups_persistence)
     cdef void tox_options_default(Tox_Options* self)
     cdef Tox_Options* tox_options_new(Tox_Err_Options_New* error)
     cdef void tox_options_free(Tox_Options* tox_options)
@@ -560,11 +564,11 @@ cdef extern from "tox/tox.h":
     cdef bool tox_conference_peer_get_public_key(const Tox* self, Tox_Conference_Number conference_number, Tox_Conference_Peer_Number peer_number, uint8_t* public_key, Tox_Err_Conference_Peer_Query* error)
     cdef void tox_callback_conference_peer_name(Tox* self, tox_conference_peer_name_cb* callback)
     cdef void tox_callback_conference_peer_list_changed(Tox* self, tox_conference_peer_list_changed_cb* callback)
-    cdef Tox_Conference_Peer_Number tox_conference_peer_count(const Tox* self, Tox_Conference_Number conference_number, Tox_Err_Conference_Peer_Query* error)
+    cdef uint32_t tox_conference_peer_count(const Tox* self, Tox_Conference_Number conference_number, Tox_Err_Conference_Peer_Query* error)
     cdef bool tox_conference_peer_number_is_ours(const Tox* self, Tox_Conference_Number conference_number, Tox_Conference_Peer_Number peer_number, Tox_Err_Conference_Peer_Query* error)
-    cdef bool tox_conference_offline_peer_get_name(const Tox* self, Tox_Conference_Number conference_number, Tox_Conference_Peer_Number offline_peer_number, uint8_t* name, Tox_Err_Conference_Peer_Query* error)
-    cdef size_t tox_conference_offline_peer_get_name_size(const Tox* self, Tox_Conference_Number conference_number, Tox_Conference_Peer_Number offline_peer_number, Tox_Err_Conference_Peer_Query* error)
-    cdef bool tox_conference_offline_peer_get_public_key(const Tox* self, Tox_Conference_Number conference_number, Tox_Conference_Peer_Number offline_peer_number, uint8_t* public_key, Tox_Err_Conference_Peer_Query* error)
+    cdef bool tox_conference_offline_peer_get_name(const Tox* self, Tox_Conference_Number conference_number, Tox_Conference_Offline_Peer_Number offline_peer_number, uint8_t* name, Tox_Err_Conference_Peer_Query* error)
+    cdef size_t tox_conference_offline_peer_get_name_size(const Tox* self, Tox_Conference_Number conference_number, Tox_Conference_Offline_Peer_Number offline_peer_number, Tox_Err_Conference_Peer_Query* error)
+    cdef bool tox_conference_offline_peer_get_public_key(const Tox* self, Tox_Conference_Number conference_number, Tox_Conference_Offline_Peer_Number offline_peer_number, uint8_t* public_key, Tox_Err_Conference_Peer_Query* error)
     cdef uint32_t tox_conference_offline_peer_count(const Tox* self, Tox_Conference_Number conference_number, Tox_Err_Conference_Peer_Query* error)
     cdef bool tox_conference_get_title(const Tox* self, Tox_Conference_Number conference_number, uint8_t* title, Tox_Err_Conference_Title* error)
     cdef bool tox_conference_set_title(Tox* self, Tox_Conference_Number conference_number, const uint8_t* title, size_t length, Tox_Err_Conference_Title* error)
