@@ -9,3 +9,10 @@ py_binary(
         "//py_toxcore_c:pytox",
     ],
 )
+
+py_binary(
+    name = "chatbot",
+    srcs = ["chatbot.py"],
+    tags = ["no-cross"],
+    deps = ["//py_toxcore_c:pytox"],
+)
