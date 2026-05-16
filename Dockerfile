@@ -17,7 +17,7 @@ RUN ["apk", "add", "--no-cache", \
 RUN ["python3", "-m", "venv", "/path/to/venv"]
 
 RUN . /path/to/venv/bin/activate \
- && pip3 install --no-cache-dir coverage cython cython-lint mypy
+ && pip3 install --no-cache-dir coverage 'cython==3.0.11' cython-lint mypy
 
 WORKDIR /build
 RUN git clone --depth=1 --recursive https://github.com/TokTok/c-toxcore /build/c-toxcore \

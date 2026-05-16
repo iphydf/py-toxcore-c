@@ -32,7 +32,7 @@ mypy_test(
         "plugins/*.py",
     ]),
     path = [
-        "external/typeshed/stubs/requests",
+        "../+non_module_deps+typeshed/stubs/requests",
         "py_toxcore_c",
     ],
     tags = ["no-cross"],

@@ -6,13 +6,13 @@ workflows:
   circleci:
     jobs:
       - asan
-      - bazel-opt
+      - bazel-release
 
 jobs:
   asan:
     working_directory: ~/work
     docker:
-      - image: ubuntu
+      - image: ubuntu:24.04
 
     steps:
       - checkout
@@ -35,7 +35,7 @@ jobs:
       - run: python3 -m venv /tmp/path/to/venv
       - run: |
           . /tmp/path/to/venv/bin/activate
-          pip install cython setuptools
+          pip install 'cython==3.0.11' setuptools
       - run: git clone --depth=1 --recursive https://github.com/TokTok/c-toxcore
       - run: cd c-toxcore;
           . .github/scripts/flags-gcc.sh;
@@ -62,13 +62,11 @@ jobs:
           export PYTHONPATH=.
           python3 -m unittest $(find test -name "*_test.py")
 
-
-  bazel-opt:
+  bazel-release:
     working_directory: /tmp/cirrus-ci-build
     docker:
-      - image: toxchat/toktok-stack:latest-release
+      - image: toxchat/toktok-stack:latest
 
     steps:
       - checkout
-      - run: /src/workspace/tools/inject-repo py_toxcore_c
-      - run: cd /src/workspace && bazel test -k //py_toxcore_c/...
+      - run: bash <(curl -s https://raw.githubusercontent.com/TokTok/ci-tools/refs/heads/master/tools/circleci-bazel-test)

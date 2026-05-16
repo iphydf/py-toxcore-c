@@ -5,7 +5,7 @@ TESTS = glob(["**/*_test.py"])
 
 [py_test(
     name = src[:-3],
-    size = "small",
+    size = "medium" if src.startswith("auto_tests/") else "small",
     srcs = [src],
     args = ["-v"],
     tags = ["no-cross"],
