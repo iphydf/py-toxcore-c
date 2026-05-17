@@ -35,7 +35,7 @@ jobs:
       - run: python3 -m venv /tmp/path/to/venv
       - run: |
           . /tmp/path/to/venv/bin/activate
-          pip install 'cython==3.0.11' setuptools
+          pip install cython setuptools
       - run: git clone --depth=1 --recursive https://github.com/TokTok/c-toxcore
       - run: cd c-toxcore;
           . .github/scripts/flags-gcc.sh;

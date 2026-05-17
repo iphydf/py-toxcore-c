@@ -23,8 +23,10 @@ class ToxencryptsaveTest(unittest.TestCase):
             with c.Tox_Pass_Key_Ptr(b"hello", b"b" * 32) as pk2:
                 with self.assertRaises(c.ApiException) as ex:
                     pk2.decrypt(pk1.encrypt(b"hello world"))
-                self.assertEqual(ex.exception.code.name,
-                                 c.TOX_ERR_DECRYPTION_FAILED.name)
+                self.assertEqual(
+                    ex.exception.code.name,
+                    c.Tox_Err_Decryption.TOX_ERR_DECRYPTION_FAILED.name,
+                )
 
     def test_salt_too_small(self) -> None:
         with self.assertRaises(common.LengthException):
@@ -42,14 +44,16 @@ class ToxencryptsaveTest(unittest.TestCase):
         with self.assertRaises(c.ApiException) as ex:
             c.pass_decrypt(c.pass_encrypt(b"hello world", b"hunter2"),
                            b"hunter3")
-        self.assertEqual(ex.exception.code, c.TOX_ERR_DECRYPTION_FAILED)
+        self.assertEqual(ex.exception.code,
+                         c.Tox_Err_Decryption.TOX_ERR_DECRYPTION_FAILED)
 
     def test_get_salt(self) -> None:
         salt = c.get_salt(c.pass_encrypt(b"hello world", b"hunter2"))
         self.assertEqual(len(salt), 32)
         with self.assertRaises(c.ApiException) as ex:
             c.get_salt(b"hello world" * 10)
-        self.assertEqual(ex.exception.code, c.TOX_ERR_GET_SALT_BAD_FORMAT)
+        self.assertEqual(ex.exception.code,
+                         c.Tox_Err_Get_Salt.TOX_ERR_GET_SALT_BAD_FORMAT)
         with self.assertRaises(common.LengthException):
             c.get_salt(c.pass_encrypt(b"hello world", b"hunter2")[:79])
 

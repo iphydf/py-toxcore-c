@@ -45,10 +45,11 @@ class GroupBot(api.GroupBot):
             options.udp_enabled = False
             options.proxy_host = "127.0.0.1"
             options.proxy_port = 9050
-            options.proxy_type = core.TOX_PROXY_TYPE_SOCKS5
+            options.proxy_type = core.Tox_Proxy_Type.TOX_PROXY_TYPE_SOCKS5
             if data:
                 options.savedata_data = data
-                options.savedata_type = core.TOX_SAVEDATA_TYPE_TOX_SAVE
+                options.savedata_type = (
+                    core.Tox_Savedata_Type.TOX_SAVEDATA_TYPE_TOX_SAVE)
             super().__init__(config, options)
 
         # These are already set to something by self.load().
@@ -73,7 +74,7 @@ class GroupBot(api.GroupBot):
             connection_status: core.Tox_Connection) -> None:
         print("Friend connection status:", friend_number,
               connection_status.name)
-        if connection_status != core.TOX_CONNECTION_NONE:
+        if connection_status != core.Tox_Connection.TOX_CONNECTION_NONE:
             if self.conference_chatlist:
                 # Invite to conference.
                 self.conference_invite(friend_number, 0)

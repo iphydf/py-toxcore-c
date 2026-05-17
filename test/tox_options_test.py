@@ -32,9 +32,10 @@ class ToxOptionsTest(unittest.TestCase):
         opts.hole_punching_enabled = False
         self.assertFalse(opts.hole_punching_enabled)
 
-        self.assertEqual(opts.proxy_type, c.TOX_PROXY_TYPE_NONE)
-        opts.proxy_type = c.TOX_PROXY_TYPE_SOCKS5
-        self.assertEqual(opts.proxy_type, c.TOX_PROXY_TYPE_SOCKS5)
+        self.assertEqual(opts.proxy_type, c.Tox_Proxy_Type.TOX_PROXY_TYPE_NONE)
+        opts.proxy_type = c.Tox_Proxy_Type.TOX_PROXY_TYPE_SOCKS5
+        self.assertEqual(opts.proxy_type,
+                         c.Tox_Proxy_Type.TOX_PROXY_TYPE_SOCKS5)
 
         opts.proxy_host = "localhost"
         self.assertEqual(opts.proxy_host, "localhost")
@@ -51,8 +52,9 @@ class ToxOptionsTest(unittest.TestCase):
         opts.tcp_port = 1237
         self.assertEqual(opts.tcp_port, 1237)
 
-        opts.savedata_type = c.TOX_SAVEDATA_TYPE_TOX_SAVE
-        self.assertEqual(opts.savedata_type, c.TOX_SAVEDATA_TYPE_TOX_SAVE)
+        opts.savedata_type = c.Tox_Savedata_Type.TOX_SAVEDATA_TYPE_TOX_SAVE
+        self.assertEqual(opts.savedata_type,
+                         c.Tox_Savedata_Type.TOX_SAVEDATA_TYPE_TOX_SAVE)
 
         opts.savedata_data = b"test"
         self.assertEqual(opts.savedata_data, b"test")

@@ -28,12 +28,13 @@ class ToxTest(unittest.TestCase):
 
     def test_pass_invalid_options(self) -> None:
         opts = c.Tox_Options_Ptr()
-        opts.proxy_type = c.TOX_PROXY_TYPE_SOCKS5
+        opts.proxy_type = c.Tox_Proxy_Type.TOX_PROXY_TYPE_SOCKS5
         opts.proxy_host = "invalid-host"
         opts.proxy_port = 1234
         with self.assertRaises(c.ApiException) as e:
             c.Tox_Ptr(opts)
-        self.assertEqual(e.exception.code, c.TOX_ERR_NEW_PROXY_BAD_HOST)
+        self.assertEqual(e.exception.code,
+                         c.Tox_Err_New.TOX_ERR_NEW_PROXY_BAD_HOST)
 
     def test_address(self) -> None:
         opts = c.Tox_Options_Ptr()
@@ -85,12 +86,15 @@ class ToxTest(unittest.TestCase):
 
     def test_set_status(self) -> None:
         with c.Tox_Ptr() as tox:
-            self.assertEqual(tox.status, c.TOX_USER_STATUS_NONE)
-            tox.status = c.TOX_USER_STATUS_AWAY
-            self.assertEqual(tox.status, c.TOX_USER_STATUS_AWAY)
+            self.assertEqual(tox.status,
+                             c.Tox_User_Status.TOX_USER_STATUS_NONE)
+            tox.status = c.Tox_User_Status.TOX_USER_STATUS_AWAY
+            self.assertEqual(tox.status,
+                             c.Tox_User_Status.TOX_USER_STATUS_AWAY)
             # setting it to an invalid value has no effect
             tox.status = c.Tox_User_Status(50)
-            self.assertEqual(tox.status, c.TOX_USER_STATUS_AWAY)
+            self.assertEqual(tox.status,
+                             c.Tox_User_Status.TOX_USER_STATUS_AWAY)
 
     def test_friend_add(self) -> None:
         with c.Tox_Ptr() as tox1:
@@ -104,7 +108,8 @@ class ToxTest(unittest.TestCase):
         with c.Tox_Ptr() as tox:
             with self.assertRaises(c.ApiException) as e:
                 tox.bootstrap("invalid-host", 1234, bytes(c.PUBLIC_KEY_SIZE))
-            self.assertEqual(e.exception.code, c.TOX_ERR_BOOTSTRAP_BAD_HOST)
+            self.assertEqual(e.exception.code,
+                             c.Tox_Err_Bootstrap.TOX_ERR_BOOTSTRAP_BAD_HOST)
 
     def test_bootstrap_checks_key_length(self) -> None:
         with c.Tox_Ptr() as tox:
@@ -127,7 +132,7 @@ class ToxTest(unittest.TestCase):
                 with self.assertRaises(c.ApiException) as e:
                     print(tox.udp_port)
                 self.assertEqual(e.exception.code,
-                                 c.TOX_ERR_GET_PORT_NOT_BOUND)
+                                 c.Tox_Err_Get_Port.TOX_ERR_GET_PORT_NOT_BOUND)
 
     def test_tcp_port_fails_when_tcp_disabled(self) -> None:
         with c.Tox_Options_Ptr() as opts:
@@ -136,7 +141,7 @@ class ToxTest(unittest.TestCase):
                 with self.assertRaises(c.ApiException) as e:
                     print(tox.tcp_port)
                 self.assertEqual(e.exception.code,
-                                 c.TOX_ERR_GET_PORT_NOT_BOUND)
+                                 c.Tox_Err_Get_Port.TOX_ERR_GET_PORT_NOT_BOUND)
 
     def test_tcp_port(self) -> None:
         with c.Tox_Options_Ptr() as opts:

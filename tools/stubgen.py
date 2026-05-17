@@ -1,4 +1,5 @@
 import collections
+import enum
 import inspect
 import os
 
@@ -81,7 +82,10 @@ def process_type(
     cls = classes[sym] = [
         f"class {sym}{inherit}:",
     ]
-    if sym.endswith("Exception") or is_enum:
+    if is_enum and issubclass(attr, enum.Enum):
+        members = [f"    {member.name} = ..." for member in attr]
+        cls.extend(members or ["    ..."])
+    elif sym.endswith("Exception") or is_enum:
         cls[0] += " ..."
     else:
         process_class(cls, imports, typevars, attr)

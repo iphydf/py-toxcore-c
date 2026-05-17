@@ -6,10 +6,12 @@ from pytox.toxcore import tox
 
 
 class AvTest(unittest.TestCase):
+
     def test_version(self) -> None:
         with self.assertRaises(av.ApiException) as ex:
             av.Toxav_Ptr(cast(tox.Tox_Ptr, None))
-        self.assertEqual(ex.exception.code, av.TOXAV_ERR_NEW_NULL)
+        self.assertEqual(ex.exception.code,
+                         av.Toxav_Err_New.TOXAV_ERR_NEW_NULL)
 
 
 if __name__ == "__main__":

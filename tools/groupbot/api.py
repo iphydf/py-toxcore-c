@@ -109,7 +109,7 @@ class GroupBot(core.Tox_Ptr):
 @dataclass
 class Reply:
     text: str
-    message_type: core.Tox_Message_Type = core.TOX_MESSAGE_TYPE_NORMAL
+    message_type: core.Tox_Message_Type = core.Tox_Message_Type.TOX_MESSAGE_TYPE_NORMAL
 
 
 T = TypeVar("T")
