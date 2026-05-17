@@ -121,7 +121,7 @@ class Commands:
         if not params:
             return api.Reply("Usage: !nick <nickname>")
         bot.name = params[0].encode()
-        bot.group_self_set_name(0, bot.name)
+        bot.group_set_self_name(0, bot.name)
         return None
 
     @api.admin

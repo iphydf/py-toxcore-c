@@ -4,12 +4,11 @@ from pytox import common
 from types import TracebackType
 from typing import Optional
 from typing import TypeVar
-
 T = TypeVar("T")
+
 
 class ApiException(common.ApiException):
     pass
-
 
 
 cdef class Tox_Pass_Key_Ptr:
@@ -38,87 +37,86 @@ cdef class Tox_Pass_Key_Ptr:
     cdef Tox_Pass_Key* _derive_with_salt(self, bytes passphrase, bytes salt):
         common.check_len("salt", salt, tox_pass_salt_length())
         cdef Tox_Err_Key_Derivation error = TOX_ERR_KEY_DERIVATION_OK
-        cdef Tox_Pass_Key* ptr = tox_pass_key_derive_with_salt(passphrase, len(passphrase), common.check_len("salt", salt, tox_pass_salt_length()), &error)
+        cdef Tox_Pass_Key* ptr = tox_pass_key_derive_with_salt(passphrase, len(passphrase), salt, &error)
         if error:
             raise ApiException(Tox_Err_Key_Derivation(error))
         return ptr
 
-    #
-    # Manual
-    #
-
-    def __init__(self, passphrase: bytes, salt: Optional[bytes] = None):
+    def __init__(self, passphrase: bytes, salt: Optional[bytes] = None) -> None:
         """Create new Tox_Pass_Key object."""
-        if salt:
+        if salt is not None:
             self._ptr = self._derive_with_salt(passphrase, salt)
-        else:
+        if salt is None:
             self._ptr = self._derive(passphrase)
 
     def encrypt(self, plaintext: bytes) -> bytes:
         cdef Tox_Err_Encryption err = TOX_ERR_ENCRYPTION_OK
         cdef size_t size = len(plaintext) + tox_pass_encryption_extra_length()
-        cdef uint8_t *ciphertext = <uint8_t*> malloc(size * sizeof(uint8_t))
+        cdef uint8_t* buf = <uint8_t*> malloc(size * sizeof(uint8_t))
         try:
-            tox_pass_key_encrypt(self._get(), plaintext, len(plaintext), ciphertext, &err)
+            tox_pass_key_encrypt(self._get(), plaintext, len(plaintext), buf, &err)
             if err:
                 raise ApiException(Tox_Err_Encryption(err))
-            return ciphertext[:size]
+            return buf[:size]
         finally:
-            free(ciphertext)
+            free(buf)
 
     def decrypt(self, ciphertext: bytes) -> bytes:
-        common.check_len("ciphertext", ciphertext, tox_pass_encryption_extra_length())
         cdef Tox_Err_Decryption err = TOX_ERR_DECRYPTION_OK
         cdef size_t size = len(ciphertext) - tox_pass_encryption_extra_length()
-        cdef uint8_t *plaintext = <uint8_t*> malloc(size * sizeof(uint8_t))
+        cdef uint8_t* buf = <uint8_t*> malloc(size * sizeof(uint8_t))
         try:
-            tox_pass_key_decrypt(self._get(), ciphertext, len(ciphertext), plaintext, &err)
+            tox_pass_key_decrypt(self._get(), ciphertext, len(ciphertext), buf, &err)
             if err:
                 raise ApiException(Tox_Err_Decryption(err))
-            return plaintext[:size]
+            return buf[:size]
         finally:
-            free(plaintext)
+            free(buf)
+PASS_SALT_LENGTH: int = tox_pass_salt_length()
+PASS_KEY_LENGTH: int = tox_pass_key_length()
+PASS_ENCRYPTION_EXTRA_LENGTH: int = tox_pass_encryption_extra_length()
 
 
 def pass_encrypt(plaintext: bytes, passphrase: bytes) -> bytes:
-    cdef Tox_Err_Encryption err = Tox_Err_Encryption.TOX_ERR_ENCRYPTION_OK
+    cdef Tox_Err_Encryption err = TOX_ERR_ENCRYPTION_OK
     cdef size_t size = len(plaintext) + tox_pass_encryption_extra_length()
-    cdef uint8_t *ciphertext = <uint8_t*> malloc(size * sizeof(uint8_t))
+    cdef uint8_t* buf = <uint8_t*> malloc(size * sizeof(uint8_t))
     try:
-        tox_pass_encrypt(plaintext, len(plaintext), passphrase, len(passphrase), ciphertext, &err)
+        tox_pass_encrypt(plaintext, len(plaintext), passphrase, len(passphrase), buf, &err)
         if err:
             raise ApiException(Tox_Err_Encryption(err))
-        return ciphertext[:size]
+        return buf[:size]
     finally:
-        free(ciphertext)
+        free(buf)
 
 
 def pass_decrypt(ciphertext: bytes, passphrase: bytes) -> bytes:
-    common.check_len("ciphertext", ciphertext, tox_pass_encryption_extra_length())
-    cdef Tox_Err_Decryption err = Tox_Err_Decryption.TOX_ERR_DECRYPTION_OK
+    cdef Tox_Err_Decryption err = TOX_ERR_DECRYPTION_OK
     cdef size_t size = len(ciphertext) - tox_pass_encryption_extra_length()
-    cdef uint8_t *plaintext = <uint8_t*> malloc(size * sizeof(uint8_t))
+    cdef uint8_t* buf = <uint8_t*> malloc(size * sizeof(uint8_t))
     try:
-        tox_pass_decrypt(ciphertext, len(ciphertext), passphrase, len(passphrase), plaintext, &err)
+        tox_pass_decrypt(ciphertext, len(ciphertext), passphrase, len(passphrase), buf, &err)
         if err:
             raise ApiException(Tox_Err_Decryption(err))
-        return plaintext[:size]
+        return buf[:size]
     finally:
-        free(plaintext)
+        free(buf)
 
 
 def get_salt(ciphertext: bytes) -> bytes:
     common.check_len("ciphertext", ciphertext, tox_pass_encryption_extra_length())
-    cdef Tox_Err_Get_Salt err = Tox_Err_Get_Salt.TOX_ERR_GET_SALT_OK
-    cdef uint8_t *salt = <uint8_t*> malloc(tox_pass_salt_length() * sizeof(uint8_t))
+    cdef Tox_Err_Get_Salt err = TOX_ERR_GET_SALT_OK
+    cdef size_t size = tox_pass_salt_length()
+    cdef uint8_t* buf = <uint8_t*> malloc(size * sizeof(uint8_t))
     try:
-        tox_get_salt(ciphertext, salt, &err)
+        tox_get_salt(ciphertext, buf, &err)
         if err:
             raise ApiException(Tox_Err_Get_Salt(err))
-        return salt[:tox_pass_salt_length()]
+        return buf[:size]
     finally:
-        free(salt)
+        free(buf)
 
 
 def is_data_encrypted(data: bytes) -> bool:
+    common.check_len("data", data, tox_pass_encryption_extra_length())
     return tox_is_data_encrypted(data)

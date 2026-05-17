@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Regenerate the Cython bindings (.pxd/.pyx) from the c-toxcore headers using
+# apigen, then refresh the .pyi type stubs from the compiled module.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
@@ -6,9 +8,19 @@ WORKSPACE_DIR="$(dirname "$REPO_DIR")"
 
 set -eux
 
-"$WORKSPACE_DIR/hs-apigen/tools/gen-python" "$@" "$REPO_DIR/pytox" \
-  "$WORKSPACE_DIR/c-toxcore/toxav/toxav.h" \
-  "$WORKSPACE_DIR/c-toxcore/toxcore/tox.h" \
-  "$WORKSPACE_DIR/c-toxcore/toxencryptsave/toxencryptsave.h"
+cd "$WORKSPACE_DIR"
+
+bazel build //hs-apigen/tools:apigen
+
+bazel-bin/hs-apigen/tools/apigen --py-out "$REPO_DIR/pytox" \
+  c-toxcore/toxcore/tox.h \
+  c-toxcore/toxcore/tox_attributes.h \
+  c-toxcore/toxcore/tox_events.h \
+  c-toxcore/toxcore/tox_log_level.h \
+  c-toxcore/toxcore/tox_options.h \
+  c-toxcore/toxav/toxav.h \
+  c-toxcore/toxencryptsave/toxencryptsave.h
+
+# stubgen introspects the built extension modules, so build first.
 bazel run //py_toxcore_c/tools:stubgen -- "$REPO_DIR"
 bazel build //py_toxcore_c:pytox

@@ -47,7 +47,7 @@ class GroupBot(api.GroupBot):
             options.proxy_port = 9050
             options.proxy_type = core.Tox_Proxy_Type.TOX_PROXY_TYPE_SOCKS5
             if data:
-                options.savedata_data = data
+                options.savedata = data
                 options.savedata_type = (
                     core.Tox_Savedata_Type.TOX_SAVEDATA_TYPE_TOX_SAVE)
             super().__init__(config, options)
@@ -151,7 +151,7 @@ class GroupBot(api.GroupBot):
         )
         if message.startswith(b"~"):
             return
-        peer = self.conference_get_peer_name(conference_number,
+        peer = self.conference_peer_get_name(conference_number,
                                              peer_number).decode()
         if message.startswith(b"!"):
             reply = self.cmds.handle(

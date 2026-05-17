@@ -56,8 +56,8 @@ class ToxOptionsTest(unittest.TestCase):
         self.assertEqual(opts.savedata_type,
                          c.Tox_Savedata_Type.TOX_SAVEDATA_TYPE_TOX_SAVE)
 
-        opts.savedata_data = b"test"
-        self.assertEqual(opts.savedata_data, b"test")
+        opts.savedata = b"test"
+        self.assertEqual(opts.savedata, b"test")
 
         self.assertFalse(opts.experimental_thread_safety)
         opts.experimental_thread_safety = True

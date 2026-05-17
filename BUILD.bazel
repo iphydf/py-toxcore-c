@@ -6,16 +6,12 @@ project(license = "gpl3-https")
 
 pyx_library(
     name = "pytox",
-    srcs = glob(
-        [
-            "pytox/**/*.pxd",
-            "pytox/**/*.pyx",
-            "pytox/**/*.py",
-            "pytox/**/*.pyi",
-        ],
-        # TODO(iphydf): Remove.
-        exclude = ["**/*.gen.pyx"],
-    ),
+    srcs = glob([
+        "pytox/**/*.pxd",
+        "pytox/**/*.pyx",
+        "pytox/**/*.py",
+        "pytox/**/*.pyi",
+    ]),
     cdeps = ["//c-toxcore"],
     cython_directives = {
         "embedsignature": "True",
