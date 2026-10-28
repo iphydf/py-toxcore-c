@@ -23,7 +23,7 @@ class Echo(api.Handler):
         self,
         bot: api.GroupBot,
         friend_pk: bytes,
-        message_type: core.Tox_Message_Type,
+        message_type: core.MessageType,
         message: tuple[str, ...],
     ) -> Optional[api.Reply]:
         """Handle a Tox message."""

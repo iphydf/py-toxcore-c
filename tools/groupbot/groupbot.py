@@ -27,6 +27,7 @@ from py_toxcore_c.tools.groupbot import commands
 from py_toxcore_c.tools.groupbot import nodes
 
 import pytox.toxcore.tox as core
+from pytox.toxcore import events
 
 
 class GroupBot(api.GroupBot):
@@ -37,19 +38,18 @@ class GroupBot(api.GroupBot):
 
         data = self.load(config)
 
-        with core.Tox_Options_Ptr() as options:
-            options.experimental_owned_data = True
+        with core.Options() as options:
             options.experimental_disable_dns = True
             options.experimental_groups_persistence = True
             options.local_discovery_enabled = False
             options.udp_enabled = False
             options.proxy_host = "127.0.0.1"
             options.proxy_port = 9050
-            options.proxy_type = core.Tox_Proxy_Type.TOX_PROXY_TYPE_SOCKS5
+            options.proxy_type = core.ProxyType.SOCKS5
             if data:
                 options.savedata = data
                 options.savedata_type = (
-                    core.Tox_Savedata_Type.TOX_SAVEDATA_TYPE_TOX_SAVE)
+                    core.SavedataType.TOX_SAVE)
             super().__init__(config, options)
 
         # These are already set to something by self.load().
@@ -60,116 +60,111 @@ class GroupBot(api.GroupBot):
         if not self.status_message:
             self.status_message = config.status_message.encode()
 
-    def handle_self_connection_status(
-            self, connection_status: core.Tox_Connection) -> None:
-        print("Connection status:", connection_status.name)
+    def handle(self, event: events.Event) -> None:
+        match event:
+            case events.SelfConnectionStatusEvent(connection_status=status):
+                print("Connection status:", status.name)
+            case events.FriendRequestEvent(public_key=public_key,
+                                           message=message):
+                print("Friend request:", public_key.hex(), message.decode())
+                self.friend_add_norequest(public_key)
+                self.save()
+            case events.FriendConnectionStatusEvent(
+                    friend_number=friend_number, connection_status=status):
+                print("Friend connection status:", friend_number,
+                      status.name)
+                if status != core.Connection.NONE and self.conference_chatlist:
+                    # Invite to conference.
+                    self.conference_invite(friend_number,
+                                           api.CONFERENCE)
+            case events.FriendMessageEvent(friend_number=friend_number,
+                                           type=type_,
+                                           message=message):
+                print("Friend message:", friend_number, type_.name,
+                      message.decode())
+            case events.ConferenceInviteEvent(friend_number=friend_number,
+                                              type=type_,
+                                              cookie=cookie):
+                print("Conference invite:", friend_number, type_.name, cookie)
+                if friend_number != api.ADMIN:
+                    print("Ignoring")
+                    return
+                self.conference_join(friend_number, cookie)
+            case events.GroupInviteEvent(friend_number=friend_number,
+                                         invite_data=invite_data,
+                                         group_name=group_name):
+                print("Group invite:", friend_number, group_name)
+                if friend_number != api.ADMIN:
+                    print("Ignoring")
+                    return
+                self.group_invite_accept(friend_number, invite_data,
+                                         self.name, b"")
+            case events.GroupMessageEvent():
+                self._group_message(event)
+            case events.ConferenceMessageEvent():
+                self._conference_message(event)
 
-    def handle_friend_request(self, public_key: bytes, message: bytes) -> None:
-        print("Friend request:", public_key.hex(), message.decode())
-        self.friend_add_norequest(public_key)
-        self.save()
-
-    def handle_friend_connection_status(
-            self, friend_number: int,
-            connection_status: core.Tox_Connection) -> None:
-        print("Friend connection status:", friend_number,
-              connection_status.name)
-        if connection_status != core.Tox_Connection.TOX_CONNECTION_NONE:
-            if self.conference_chatlist:
-                # Invite to conference.
-                self.conference_invite(friend_number, 0)
-
-    def handle_friend_message(self, friend_number: int,
-                              type_: core.Tox_Message_Type,
-                              message: bytes) -> None:
-        print("Friend message:", friend_number, type_.name, message.decode())
-
-    def handle_conference_invite(self, friend_number: int,
-                                 type_: core.Tox_Conference_Type,
-                                 cookie: bytes) -> None:
-        print("Conference invite:", friend_number, type_.name, cookie)
-        if friend_number != 0:
-            print("Ignoring")
-            return
-        self.conference_join(friend_number, cookie)
-
-    def handle_group_invite(self, friend_number: int, invite_data: bytes,
-                            group_name: bytes) -> None:
-        print("Group invite:", friend_number, group_name)
-        if friend_number != 0:
-            print("Ignoring")
-            return
-        self.group_invite_accept(friend_number, invite_data, self.name, b"")
-
-    def handle_group_message(
-        self,
-        group_number: int,
-        peer_id: int,
-        message_type: core.Tox_Message_Type,
-        message: bytes,
-        message_id: int,
-    ) -> None:
-        print("Group message:", group_number, peer_id, message_type.name,
-              message.decode())
-        peer = self.group_peer_get_name(group_number, peer_id).decode()
+    def _group_message(self, event: events.GroupMessageEvent) -> None:
+        print("Group message:", event.group_number, event.peer_id,
+              event.message_type.name, event.message.decode())
+        peer = self.group_peer_get_name(event.group_number,
+                                        event.peer_id).decode()
         if not self.conference_chatlist:
             return
-        if message.startswith(b"~"):
+        if event.message.startswith(b"~"):
             return
-        if message.startswith(b"!"):
+        if event.message.startswith(b"!"):
             reply = self.cmds.handle(
                 self,
-                self.group_peer_get_public_key(group_number, peer_id),
-                message_type,
-                message[1:],
+                self.group_peer_get_public_key(event.group_number,
+                                               event.peer_id),
+                event.message_type,
+                event.message[1:],
             )
             if reply:
                 self.group_send_message(
-                    group_number,
+                    event.group_number,
                     reply.message_type,
                     f"{peer}: {reply.text}".encode(),
                 )
         else:
             self.conference_send_message(
-                0, message_type, f"<{peer}> {message.decode()}".encode())
+                api.CONFERENCE, event.message_type,
+                f"<{peer}> {event.message.decode()}".encode())
 
-    def handle_conference_message(
-        self,
-        conference_number: int,
-        peer_number: int,
-        type_: core.Tox_Message_Type,
-        message: bytes,
-    ) -> None:
-        if self.conference_peer_number_is_ours(conference_number, peer_number):
+    def _conference_message(self,
+                            event: events.ConferenceMessageEvent) -> None:
+        conference = event.conference_number
+        if self.conference_peer_number_is_ours(conference, event.peer_number):
             return
         print(
             "Conference message:",
-            conference_number,
-            peer_number,
-            type_.name,
-            message.decode(),
+            conference,
+            event.peer_number,
+            event.type.name,
+            event.message.decode(),
         )
-        if message.startswith(b"~"):
+        if event.message.startswith(b"~"):
             return
-        peer = self.conference_peer_get_name(conference_number,
-                                             peer_number).decode()
-        if message.startswith(b"!"):
+        peer = self.conference_peer_get_name(conference,
+                                             event.peer_number).decode()
+        if event.message.startswith(b"!"):
             reply = self.cmds.handle(
                 self,
-                self.conference_peer_get_public_key(conference_number,
-                                                    peer_number),
-                type_,
-                message[1:],
+                self.conference_peer_get_public_key(conference,
+                                                    event.peer_number),
+                event.type,
+                event.message[1:],
             )
             if reply:
                 self.conference_send_message(
-                    conference_number,
+                    conference,
                     reply.message_type,
                     f"{peer}: {reply.text}".encode(),
                 )
         else:
-            self.group_send_message(0, type_,
-                                    f"<{peer}> {message.decode()}".encode())
+            self.group_send_message(api.GROUP, event.type,
+                                    f"<{peer}> {event.message.decode()}".encode())
 
 
 class ToxSaver:
@@ -199,7 +194,8 @@ def main(config: api.Config) -> None:
                                       bytes.fromhex(node.public_key))
             while True:
                 try:
-                    bot.iterate()
+                    for event in bot.iterate():
+                        bot.handle(event)
                 except core.ApiException as e:
                     print("Error:", e)
                 time.sleep(bot.iteration_interval / 1000)

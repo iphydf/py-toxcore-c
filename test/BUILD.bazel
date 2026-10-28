@@ -1,7 +1,10 @@
 load("@rules_python//python:defs.bzl", "py_test")
 load("//third_party/python:build_defs.bzl", "mypy_test")
 
-TESTS = glob(["**/*_test.py"])
+TESTS = glob(
+    ["**/*_test.py"],
+    exclude = ["stubtest_test.py"],
+)
 
 [py_test(
     name = src[:-3],
@@ -18,4 +21,15 @@ mypy_test(
     path = ["py_toxcore_c"],
     tags = ["no-cross"],
     deps = ["//py_toxcore_c"],
+)
+
+# The stubs apigen writes match the compiled modules.
+py_test(
+    name = "stubtest_test",
+    srcs = ["stubtest_test.py"],
+    tags = ["no-cross"],
+    deps = [
+        "//py_toxcore_c",
+        "@mypy",
+    ],
 )

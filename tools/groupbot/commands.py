@@ -55,7 +55,7 @@ class Commands:
         self,
         bot: api.GroupBot,
         friend_pk: bytes,
-        message_type: core.Tox_Message_Type,
+        message_type: core.MessageType,
         message: bytes,
     ) -> Optional[api.Reply]:
         """Handle a command."""
@@ -90,7 +90,7 @@ class Commands:
         self,
         bot: api.GroupBot,
         friend_pk: bytes,
-        message_type: core.Tox_Message_Type,
+        message_type: core.MessageType,
         params: tuple[str, ...],
     ) -> Optional[api.Reply]:
         """Null command."""
@@ -101,12 +101,12 @@ class Commands:
         self,
         bot: api.GroupBot,
         friend_pk: bytes,
-        message_type: core.Tox_Message_Type,
+        message_type: core.MessageType,
         params: tuple[str, ...],
     ) -> Optional[api.Reply]:
         """Leave the conference."""
-        bot.conference_delete(0)
-        bot.group_leave(0, b"Goodbye!")
+        bot.conference_delete(api.CONFERENCE)
+        bot.group_leave(api.GROUP, b"Goodbye!")
         return None
 
     @api.admin
@@ -114,14 +114,14 @@ class Commands:
         self,
         bot: api.GroupBot,
         friend_pk: bytes,
-        message_type: core.Tox_Message_Type,
+        message_type: core.MessageType,
         params: tuple[str, ...],
     ) -> Optional[api.Reply]:
         """Set the bot's nickname."""
         if not params:
             return api.Reply("Usage: !nick <nickname>")
         bot.name = params[0].encode()
-        bot.group_set_self_name(0, bot.name)
+        bot.group_set_self_name(api.GROUP, bot.name)
         return None
 
     @api.admin
@@ -129,7 +129,7 @@ class Commands:
         self,
         bot: api.GroupBot,
         friend_pk: bytes,
-        message_type: core.Tox_Message_Type,
+        message_type: core.MessageType,
         params: tuple[str, ...],
     ) -> Optional[api.Reply]:
         """Reload the extension modules."""
@@ -141,7 +141,7 @@ class Commands:
         self,
         bot: api.GroupBot,
         friend_pk: bytes,
-        message_type: core.Tox_Message_Type,
+        message_type: core.MessageType,
         params: tuple[str, ...],
     ) -> Optional[api.Reply]:
         """Save the groupbot state to disk."""

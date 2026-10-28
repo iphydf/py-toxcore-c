@@ -20,20 +20,20 @@ class GroupTest(unittest.TestCase):
             pass
 
     @staticmethod
-    def _new_group(tox: c.Tox_Ptr) -> int:
+    def _new_group(tox: c.Tox) -> c.GroupNumber:
         return tox.group_new(
-            c.Tox_Group_Privacy_State.TOX_GROUP_PRIVACY_STATE_PRIVATE,
+            c.GroupPrivacyState.PRIVATE,
             b"test group",
             b"me",
         )
 
     def test_group_new(self) -> None:
-        with c.Tox_Ptr() as tox:
+        with c.Tox() as tox:
             group_number = self._new_group(tox)
-            self.assertIn(group_number, tox.group_group_list)
+            self.assertIn(group_number, tox.group_list)
 
     def test_group_query(self) -> None:
-        with c.Tox_Ptr() as tox:
+        with c.Tox() as tox:
             g = self._new_group(tox)
             self.assertEqual(tox.group_get_name(g), b"test group")
             self.assertEqual(tox.group_get_self_name(g), b"me")
@@ -51,38 +51,38 @@ class GroupTest(unittest.TestCase):
             tox.group_is_connected(g)
 
     def test_group_self_status(self) -> None:
-        with c.Tox_Ptr() as tox:
+        with c.Tox() as tox:
             g = self._new_group(tox)
             tox.group_set_self_name(g, b"renamed")
             self.assertEqual(tox.group_get_self_name(g), b"renamed")
             tox.group_set_self_status(g,
-                                      c.Tox_User_Status.TOX_USER_STATUS_AWAY)
+                                      c.UserStatus.AWAY)
             self.assertEqual(tox.group_get_self_status(g),
-                             c.Tox_User_Status.TOX_USER_STATUS_AWAY)
+                             c.UserStatus.AWAY)
 
     def test_group_founder_settings(self) -> None:
-        with c.Tox_Ptr() as tox:
+        with c.Tox() as tox:
             g = self._new_group(tox)
             self._tolerant(lambda: tox.group_set_topic(g, b"the topic"))
             self._tolerant(lambda: tox.group_set_peer_limit(g, 10))
             self._tolerant(lambda: tox.group_set_voice_state(
-                g, c.Tox_Group_Voice_State.TOX_GROUP_VOICE_STATE_MODERATOR))
+                g, c.GroupVoiceState.MODERATOR))
             self._tolerant(lambda: tox.group_set_topic_lock(
-                g, c.Tox_Group_Topic_Lock.TOX_GROUP_TOPIC_LOCK_DISABLED))
+                g, c.GroupTopicLock.DISABLED))
             self._tolerant(lambda: tox.group_set_privacy_state(
-                g, c.Tox_Group_Privacy_State.TOX_GROUP_PRIVACY_STATE_PUBLIC))
+                g, c.GroupPrivacyState.PUBLIC))
             self._tolerant(lambda: tox.group_set_password(g, b"secret"))
 
     def test_group_send_message(self) -> None:
-        with c.Tox_Ptr() as tox:
+        with c.Tox() as tox:
             g = self._new_group(tox)
             self._tolerant(lambda: tox.group_send_message(
-                g, c.Tox_Message_Type.TOX_MESSAGE_TYPE_NORMAL, b"hello"))
+                g, c.MessageType.NORMAL, b"hello"))
             self._tolerant(
                 lambda: tox.group_send_custom_packet(g, True, b"\x01custom"))
 
     def test_group_disconnect_and_leave(self) -> None:
-        with c.Tox_Ptr() as tox:
+        with c.Tox() as tox:
             self._tolerant(lambda: tox.group_disconnect(self._new_group(tox)))
             tox.group_leave(self._new_group(tox), b"bye")
 

@@ -24,6 +24,12 @@ class Config:
     github_path: str
 
 
+# The admin is the first friend; the bot runs one conference and one group.
+ADMIN = core.FriendNumber(0)
+CONFERENCE = core.ConferenceNumber(0)
+GROUP = core.GroupNumber(0)
+
+
 def parse_args() -> Config:
     parser = argparse.ArgumentParser(description="""
     A simple Tox group bot.
@@ -77,10 +83,10 @@ def parse_args() -> Config:
     return Config(**vars(parser.parse_args()))
 
 
-class GroupBot(core.Tox_Ptr):
+class GroupBot(core.Tox):
     config: Config
 
-    def __init__(self, config: Config, options: core.Tox_Options_Ptr) -> None:
+    def __init__(self, config: Config, options: core.Options) -> None:
         super().__init__(options)
         self.config = config
 
@@ -109,15 +115,15 @@ class GroupBot(core.Tox_Ptr):
 @dataclass
 class Reply:
     text: str
-    message_type: core.Tox_Message_Type = core.Tox_Message_Type.TOX_MESSAGE_TYPE_NORMAL
+    message_type: core.MessageType = core.MessageType.NORMAL
 
 
 T = TypeVar("T")
 
 CommandFunction = Callable[
-    [GroupBot, bytes, core.Tox_Message_Type, tuple[str, ...]], Optional[Reply]]
+    [GroupBot, bytes, core.MessageType, tuple[str, ...]], Optional[Reply]]
 CommandMethod = Callable[
-    [T, GroupBot, bytes, core.Tox_Message_Type, tuple[str,
+    [T, GroupBot, bytes, core.MessageType, tuple[str,
                                                       ...]], Optional[Reply]]
 
 
@@ -128,10 +134,10 @@ def admin(func: CommandMethod[T]) -> CommandMethod[T]:
         self: T,
         bot: GroupBot,
         friend_pk: bytes,
-        message_type: core.Tox_Message_Type,
+        message_type: core.MessageType,
         params: tuple[str, ...],
     ) -> Optional[Reply]:
-        if friend_pk != bot.friend_get_public_key(0):
+        if friend_pk != bot.friend_get_public_key(ADMIN):
             return Reply("You must be an admin to use this command.")
         return func(self, bot, friend_pk, message_type, params)
 
@@ -154,7 +160,7 @@ class Handler:
         self,
         bot: GroupBot,
         friend_pk: bytes,
-        message_type: core.Tox_Message_Type,
+        message_type: core.MessageType,
         message: tuple[str, ...],
     ) -> Optional[Reply]:
         """Handle a Tox message."""

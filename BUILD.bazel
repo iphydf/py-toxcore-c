@@ -23,11 +23,10 @@ pyx_library(
 
 mypy_test(
     name = "mypy_test",
-    srcs = glob(
-        ["**/*.py"],
-        exclude = ["setup.py"],
-    ),
+    # pytox's own modules, as pytox.*, with the extensions' stubs.
+    srcs = glob(["pytox/**/*.py"]),
     path = ["py_toxcore_c"],
+    deps = [":pytox"],
 )
 
 py_library(

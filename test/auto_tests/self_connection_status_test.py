@@ -5,46 +5,44 @@ from dataclasses import dataclass
 from typing import Callable
 
 import pytox.toxcore.tox as core
+from pytox.toxcore import events
 
 
 @dataclass
 class TestException(Exception):
-    status: core.Tox_Connection
+    status: core.Connection
 
 
 @dataclass
 class FriendInfo:
-    connection_status: core.Tox_Connection = core.Tox_Connection.TOX_CONNECTION_NONE
+    connection_status: core.Connection = core.Connection.NONE
     request_message: bytes = b""
 
 
-class TestTox(core.Tox_Ptr):
+class TestTox(core.Tox):
     index: int
-    connection_status_from_cb = core.Tox_Connection.TOX_CONNECTION_NONE
+    connection_status_from_cb = core.Connection.NONE
     friends: dict[int, FriendInfo]
 
     def __init__(self, index: int) -> None:
-        with core.Tox_Options_Ptr() as options:
+        with core.Options() as options:
             options.local_discovery_enabled = False
             super(TestTox, self).__init__(options)
         self.index = index
         self.friends = collections.defaultdict(FriendInfo)
 
-    def handle_self_connection_status(
-            self, connection_status: core.Tox_Connection) -> None:
-        self.connection_status_from_cb = connection_status
-        raise TestException(connection_status)
-
-    def handle_friend_connection_status(
-        self,
-        friend_number: int,
-        connection_status: core.Tox_Connection,
-    ) -> None:
-        self.friends[friend_number].connection_status = connection_status
-
-    def handle_friend_request(self, public_key: bytes, message: bytes) -> None:
-        friend_number = self.friend_add_norequest(public_key)
-        self.friends[friend_number].request_message = message
+    def handle(self, event: events.Event) -> None:
+        match event:
+            case events.SelfConnectionStatusEvent(connection_status=status):
+                self.connection_status_from_cb = status
+                raise TestException(status)
+            case events.FriendConnectionStatusEvent(
+                    friend_number=n, connection_status=status):
+                self.friends[n].connection_status = status
+            case events.FriendRequestEvent(public_key=public_key,
+                                           message=message):
+                n = self.friend_add_norequest(public_key)
+                self.friends[n].request_message = message
 
 
 class AutoTest(unittest.TestCase):
@@ -58,9 +56,12 @@ class AutoTest(unittest.TestCase):
         for _ in range(0, max_iterate):
             if not cond():
                 return
-            self.tox1.iterate()
-            self.tox2.iterate()
-            self.tox3.iterate()
+            for event in self.tox1.iterate():
+                self.tox1.handle(event)
+            for event in self.tox2.iterate():
+                self.tox2.handle(event)
+            for event in self.tox3.iterate():
+                self.tox3.handle(event)
             time.sleep(self.tox1.iteration_interval / 1000)
         self.fail(f"condition not met after {max_iterate} iterations")
 
@@ -70,11 +71,11 @@ class AutoTest(unittest.TestCase):
 
         def is_online() -> bool:
             return bool(self.tox1.connection_status
-                        == core.Tox_Connection.TOX_CONNECTION_NONE
+                        == core.Connection.NONE
                         or self.tox2.connection_status
-                        == core.Tox_Connection.TOX_CONNECTION_NONE
+                        == core.Connection.NONE
                         or self.tox3.connection_status
-                        == core.Tox_Connection.TOX_CONNECTION_NONE)
+                        == core.Connection.NONE)
 
         # At most 20 seconds.
         self._iterate(
@@ -86,20 +87,20 @@ class AutoTest(unittest.TestCase):
 
         def is_online() -> bool:
             return (self.tox1.friends[0].connection_status
-                    == core.Tox_Connection.TOX_CONNECTION_NONE
+                    == core.Connection.NONE
                     or self.tox2.friends[0].connection_status
-                    == core.Tox_Connection.TOX_CONNECTION_NONE
+                    == core.Connection.NONE
                     or self.tox2.friends[1].connection_status
-                    == core.Tox_Connection.TOX_CONNECTION_NONE
+                    == core.Connection.NONE
                     or self.tox3.friends[0].connection_status
-                    == core.Tox_Connection.TOX_CONNECTION_NONE)
+                    == core.Connection.NONE)
 
         # At most 5 seconds.
         self._iterate(250, is_online)
 
     def test_connection_status_cb(self) -> None:
         for tox in (self.tox1, self.tox2, self.tox3):
-            # Test that exceptions can pass through C code.
+            # A handler's exception comes out of the loop.
             with self.assertRaises(TestException) as ex:
                 self._wait_for_self_online()
                 self.assertEqual(tox.connection_status,
