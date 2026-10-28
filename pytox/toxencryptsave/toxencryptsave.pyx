@@ -63,7 +63,7 @@ cdef class Tox_Pass_Key_Ptr:
 
     def decrypt(self, ciphertext: bytes) -> bytes:
         cdef Tox_Err_Decryption err = TOX_ERR_DECRYPTION_OK
-        cdef size_t size = len(ciphertext) - tox_pass_encryption_extra_length()
+        cdef size_t size = max(0, len(ciphertext) - tox_pass_encryption_extra_length())
         cdef uint8_t* buf = <uint8_t*> malloc(size * sizeof(uint8_t))
         try:
             tox_pass_key_decrypt(self._get(), ciphertext, len(ciphertext), buf, &err)
@@ -92,7 +92,7 @@ def pass_encrypt(plaintext: bytes, passphrase: bytes) -> bytes:
 
 def pass_decrypt(ciphertext: bytes, passphrase: bytes) -> bytes:
     cdef Tox_Err_Decryption err = TOX_ERR_DECRYPTION_OK
-    cdef size_t size = len(ciphertext) - tox_pass_encryption_extra_length()
+    cdef size_t size = max(0, len(ciphertext) - tox_pass_encryption_extra_length())
     cdef uint8_t* buf = <uint8_t*> malloc(size * sizeof(uint8_t))
     try:
         tox_pass_decrypt(ciphertext, len(ciphertext), passphrase, len(passphrase), buf, &err)

@@ -89,11 +89,14 @@ cdef class Tox_Options_Ptr:
 
     @property
     def proxy_host(self) -> str:
-        return tox_options_get_proxy_host(self._get()).decode("utf-8")
+        cdef const char* res = tox_options_get_proxy_host(self._get())
+        return res.decode("utf-8") if res is not NULL else ""
 
     @proxy_host.setter
     def proxy_host(self, proxy_host: str) -> None:
-        tox_options_set_proxy_host(self._get(), proxy_host.encode("utf-8"))
+        tox_options_set_experimental_owned_data(self._get(), True)
+        if not tox_options_set_proxy_host(self._get(), proxy_host.encode("utf-8")):
+            raise MemoryError()
 
     @property
     def proxy_port(self) -> int:
@@ -149,7 +152,9 @@ cdef class Tox_Options_Ptr:
 
     @savedata.setter
     def savedata(self, savedata: bytes) -> None:
-        tox_options_set_savedata_data(self._get(), savedata, len(savedata))
+        tox_options_set_experimental_owned_data(self._get(), True)
+        if not tox_options_set_savedata_data(self._get(), savedata, len(savedata)):
+            raise MemoryError()
 
     @property
     def experimental_owned_data(self) -> bool:
@@ -317,10 +322,18 @@ cdef:
         self.handle_group_custom_private_packet(group_number, peer_id, data)
     cdef void handle_group_custom_private_packet(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number peer_id, const uint8_t* data, size_t data_length, void* user_data) except *:
         py_handle_group_custom_private_packet(<Tox_Ptr> user_data, group_number, peer_id, data[:data_length])
+    cdef void py_handle_group_invite(self: Tox_Ptr, friend_number: Tox_Friend_Number, invite_data: bytes, group_name: bytes) except *:
+        self.handle_group_invite(friend_number, invite_data, group_name)
+    cdef void handle_group_invite(Tox* tox, Tox_Friend_Number friend_number, const uint8_t* invite_data, size_t invite_data_length, const uint8_t* group_name, size_t group_name_length, void* user_data) except *:
+        py_handle_group_invite(<Tox_Ptr> user_data, friend_number, invite_data[:invite_data_length], group_name[:group_name_length])
     cdef void py_handle_group_peer_join(self: Tox_Ptr, group_number: Tox_Group_Number, peer_id: Tox_Group_Peer_Number) except *:
         self.handle_group_peer_join(group_number, peer_id)
     cdef void handle_group_peer_join(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number peer_id, void* user_data) except *:
         py_handle_group_peer_join(<Tox_Ptr> user_data, group_number, peer_id)
+    cdef void py_handle_group_peer_exit(self: Tox_Ptr, group_number: Tox_Group_Number, peer_id: Tox_Group_Peer_Number, exit_type: Tox_Group_Exit_Type, name: bytes, part_message: bytes) except *:
+        self.handle_group_peer_exit(group_number, peer_id, exit_type, name, part_message)
+    cdef void handle_group_peer_exit(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number peer_id, Tox_Group_Exit_Type exit_type, const uint8_t* name, size_t name_length, const uint8_t* part_message, size_t part_message_length, void* user_data) except *:
+        py_handle_group_peer_exit(<Tox_Ptr> user_data, group_number, peer_id, exit_type, name[:name_length], part_message[:part_message_length])
     cdef void py_handle_group_self_join(self: Tox_Ptr, group_number: Tox_Group_Number) except *:
         self.handle_group_self_join(group_number)
     cdef void handle_group_self_join(Tox* tox, Tox_Group_Number group_number, void* user_data) except *:
@@ -367,7 +380,9 @@ cdef:
         tox_callback_group_private_message(ptr, handle_group_private_message)
         tox_callback_group_custom_packet(ptr, handle_group_custom_packet)
         tox_callback_group_custom_private_packet(ptr, handle_group_custom_private_packet)
+        tox_callback_group_invite(ptr, handle_group_invite)
         tox_callback_group_peer_join(ptr, handle_group_peer_join)
+        tox_callback_group_peer_exit(ptr, handle_group_peer_exit)
         tox_callback_group_self_join(ptr, handle_group_self_join)
         tox_callback_group_join_fail(ptr, handle_group_join_fail)
         tox_callback_group_moderation(ptr, handle_group_moderation)
@@ -785,10 +800,11 @@ cdef class Tox_Ptr:
             raise ApiException(Tox_Err_File_By_Id(err))
         return res
 
-    def file_send(self, friend_number: Tox_Friend_Number, kind: int, file_size: int, file_id: bytes, filename: bytes) -> Tox_File_Number:
-        common.check_len("file_id", file_id, tox_file_id_length())
+    def file_send(self, friend_number: Tox_Friend_Number, kind: int, file_size: int, file_id: Optional[bytes], filename: bytes) -> Tox_File_Number:
+        if file_id is not None:
+            common.check_len("file_id", file_id, tox_file_id_length())
         cdef Tox_Err_File_Send err = TOX_ERR_FILE_SEND_OK
-        cdef Tox_File_Number res = tox_file_send(self._get(), friend_number, kind, file_size, file_id, filename, len(filename), &err)
+        cdef Tox_File_Number res = tox_file_send(self._get(), friend_number, kind, file_size, <const uint8_t*> file_id if file_id is not None else NULL, filename, len(filename), &err)
         if err:
             raise ApiException(Tox_Err_File_Send(err))
         return res
@@ -1321,7 +1337,11 @@ cdef class Tox_Ptr:
 
     def handle_group_custom_private_packet(self, group_number: Tox_Group_Number, peer_id: Tox_Group_Peer_Number, data: bytes) -> None: pass
 
+    def handle_group_invite(self, friend_number: Tox_Friend_Number, invite_data: bytes, group_name: bytes) -> None: pass
+
     def handle_group_peer_join(self, group_number: Tox_Group_Number, peer_id: Tox_Group_Peer_Number) -> None: pass
+
+    def handle_group_peer_exit(self, group_number: Tox_Group_Number, peer_id: Tox_Group_Peer_Number, exit_type: Tox_Group_Exit_Type, name: bytes, part_message: bytes) -> None: pass
 
     def handle_group_self_join(self, group_number: Tox_Group_Number) -> None: pass
 

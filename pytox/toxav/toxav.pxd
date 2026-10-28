@@ -57,15 +57,16 @@ cdef extern from "tox/toxav.h":
         TOXAV_ERR_SEND_FRAME_PAYLOAD_TYPE_DISABLED
         TOXAV_ERR_SEND_FRAME_RTP_FAILED
     ctypedef struct ToxAV
-    ctypedef void toxav_audio_bit_rate_cb(ToxAV* av, uint32_t friend_number, uint32_t audio_bit_rate, void* user_data) except *
+    ctypedef void toxav_audio_bit_rate_cb(ToxAV* av, Tox_Friend_Number friend_number, uint32_t audio_bit_rate, void* user_data) except *
     ctypedef void toxav_audio_data_cb(void* tox, Tox_Conference_Number conference_number, Tox_Conference_Peer_Number peer_number, const int16_t* pcm, uint32_t samples, uint8_t channels, uint32_t sample_rate, void* userdata) except *
-    ctypedef void toxav_audio_receive_frame_cb(ToxAV* av, uint32_t friend_number, const int16_t* pcm, size_t sample_count, uint8_t channels, uint32_t sampling_rate, void* user_data) except *
-    ctypedef void toxav_call_cb(ToxAV* av, uint32_t friend_number, bool audio_enabled, bool video_enabled, void* user_data) except *
-    ctypedef void toxav_call_state_cb(ToxAV* av, uint32_t friend_number, uint32_t state, void* user_data) except *
-    ctypedef void toxav_video_bit_rate_cb(ToxAV* av, uint32_t friend_number, uint32_t video_bit_rate, void* user_data) except *
-    ctypedef void toxav_video_receive_frame_cb(ToxAV* av, uint32_t friend_number, uint16_t width, uint16_t height, const uint8_t* y, const uint8_t* u, const uint8_t* v, int32_t ystride, int32_t ustride, int32_t vstride, void* user_data) except *
+    ctypedef void toxav_audio_receive_frame_cb(ToxAV* av, Tox_Friend_Number friend_number, const int16_t* pcm, size_t sample_count, uint8_t channels, uint32_t sampling_rate, void* user_data) except *
+    ctypedef void toxav_call_cb(ToxAV* av, Tox_Friend_Number friend_number, bool audio_enabled, bool video_enabled, void* user_data) except *
+    ctypedef void toxav_call_state_cb(ToxAV* av, Tox_Friend_Number friend_number, uint32_t state, void* user_data) except *
+    ctypedef void toxav_video_bit_rate_cb(ToxAV* av, Tox_Friend_Number friend_number, uint32_t video_bit_rate, void* user_data) except *
+    ctypedef void toxav_video_receive_frame_cb(ToxAV* av, Tox_Friend_Number friend_number, uint16_t width, uint16_t height, const uint8_t* y, const uint8_t* u, const uint8_t* v, int32_t ystride, int32_t ustride, int32_t vstride, void* user_data) except *
     cdef ToxAV* toxav_new(Tox* tox, Toxav_Err_New* error)
     cdef void toxav_kill(ToxAV* self)
+    cdef Tox* toxav_get_tox(const ToxAV* self)
     cdef uint32_t toxav_iteration_interval(const ToxAV* self)
     cdef void toxav_iterate(ToxAV* self)
     cdef uint32_t toxav_audio_iteration_interval(const ToxAV* self)

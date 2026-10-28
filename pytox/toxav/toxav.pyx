@@ -13,30 +13,30 @@ class ApiException(common.ApiException):
 
 
 cdef:
-    cdef void py_handle_call(self: ToxAV_Ptr, friend_number: int, audio_enabled: bool, video_enabled: bool) except *:
+    cdef void py_handle_call(self: ToxAV_Ptr, friend_number: Tox_Friend_Number, audio_enabled: bool, video_enabled: bool) except *:
         self.handle_call(friend_number, audio_enabled, video_enabled)
-    cdef void handle_call(ToxAV* av, uint32_t friend_number, bool audio_enabled, bool video_enabled, void* user_data) except *:
+    cdef void handle_call(ToxAV* av, Tox_Friend_Number friend_number, bool audio_enabled, bool video_enabled, void* user_data) except *:
         py_handle_call(<ToxAV_Ptr> user_data, friend_number, audio_enabled, video_enabled)
-    cdef void py_handle_call_state(self: ToxAV_Ptr, friend_number: int, state: int) except *:
+    cdef void py_handle_call_state(self: ToxAV_Ptr, friend_number: Tox_Friend_Number, state: int) except *:
         self.handle_call_state(friend_number, state)
-    cdef void handle_call_state(ToxAV* av, uint32_t friend_number, uint32_t state, void* user_data) except *:
+    cdef void handle_call_state(ToxAV* av, Tox_Friend_Number friend_number, uint32_t state, void* user_data) except *:
         py_handle_call_state(<ToxAV_Ptr> user_data, friend_number, state)
-    cdef void py_handle_audio_bit_rate(self: ToxAV_Ptr, friend_number: int, audio_bit_rate: int) except *:
+    cdef void py_handle_audio_bit_rate(self: ToxAV_Ptr, friend_number: Tox_Friend_Number, audio_bit_rate: int) except *:
         self.handle_audio_bit_rate(friend_number, audio_bit_rate)
-    cdef void handle_audio_bit_rate(ToxAV* av, uint32_t friend_number, uint32_t audio_bit_rate, void* user_data) except *:
+    cdef void handle_audio_bit_rate(ToxAV* av, Tox_Friend_Number friend_number, uint32_t audio_bit_rate, void* user_data) except *:
         py_handle_audio_bit_rate(<ToxAV_Ptr> user_data, friend_number, audio_bit_rate)
-    cdef void py_handle_video_bit_rate(self: ToxAV_Ptr, friend_number: int, video_bit_rate: int) except *:
+    cdef void py_handle_video_bit_rate(self: ToxAV_Ptr, friend_number: Tox_Friend_Number, video_bit_rate: int) except *:
         self.handle_video_bit_rate(friend_number, video_bit_rate)
-    cdef void handle_video_bit_rate(ToxAV* av, uint32_t friend_number, uint32_t video_bit_rate, void* user_data) except *:
+    cdef void handle_video_bit_rate(ToxAV* av, Tox_Friend_Number friend_number, uint32_t video_bit_rate, void* user_data) except *:
         py_handle_video_bit_rate(<ToxAV_Ptr> user_data, friend_number, video_bit_rate)
-    cdef void py_handle_audio_receive_frame(self: ToxAV_Ptr, friend_number: int, pcm: array, sample_count: int, channels: int, sampling_rate: int) except *:
+    cdef void py_handle_audio_receive_frame(self: ToxAV_Ptr, friend_number: Tox_Friend_Number, pcm: array, sample_count: int, channels: int, sampling_rate: int) except *:
         self.handle_audio_receive_frame(friend_number, pcm, sample_count, channels, sampling_rate)
-    cdef void handle_audio_receive_frame(ToxAV* av, uint32_t friend_number, const int16_t* pcm, size_t sample_count, uint8_t channels, uint32_t sampling_rate, void* user_data) except *:
+    cdef void handle_audio_receive_frame(ToxAV* av, Tox_Friend_Number friend_number, const int16_t* pcm, size_t sample_count, uint8_t channels, uint32_t sampling_rate, void* user_data) except *:
         py_handle_audio_receive_frame(<ToxAV_Ptr> user_data, friend_number, array("h", [pcm[i] for i in range(sample_count * channels)]), sample_count, channels, sampling_rate)
-    cdef void py_handle_video_receive_frame(self: ToxAV_Ptr, friend_number: int, width: int, height: int, y: bytes, u: bytes, v: bytes, ystride: int, ustride: int, vstride: int) except *:
+    cdef void py_handle_video_receive_frame(self: ToxAV_Ptr, friend_number: Tox_Friend_Number, width: int, height: int, y: bytes, u: bytes, v: bytes, ystride: int, ustride: int, vstride: int) except *:
         self.handle_video_receive_frame(friend_number, width, height, y, u, v, ystride, ustride, vstride)
-    cdef void handle_video_receive_frame(ToxAV* av, uint32_t friend_number, uint16_t width, uint16_t height, const uint8_t* y, const uint8_t* u, const uint8_t* v, int32_t ystride, int32_t ustride, int32_t vstride, void* user_data) except *:
-        py_handle_video_receive_frame(<ToxAV_Ptr> user_data, friend_number, width, height, y[:max(width, abs(ystride)) * height], u[:max(width // 2, abs(ustride)) * (height // 2)], v[:max(width // 2, abs(vstride)) * (height // 2)], ystride, ustride, vstride)
+    cdef void handle_video_receive_frame(ToxAV* av, Tox_Friend_Number friend_number, uint16_t width, uint16_t height, const uint8_t* y, const uint8_t* u, const uint8_t* v, int32_t ystride, int32_t ustride, int32_t vstride, void* user_data) except *:
+        py_handle_video_receive_frame(<ToxAV_Ptr> user_data, friend_number, width, height, y[:max(width, abs(ystride)) * height], u[:max((width + 1) // 2, abs(ustride)) * ((height + 1) // 2)], v[:max((width + 1) // 2, abs(vstride)) * ((height + 1) // 2)], ystride, ustride, vstride)
     cdef void install_handlers(ToxAV_Ptr self, ToxAV* ptr):
         toxav_callback_call(ptr, handle_call, <void*> self)
         toxav_callback_call_state(ptr, handle_call_state, <void*> self)
@@ -117,6 +117,7 @@ cdef class ToxAV_Ptr:
         return res
 
     def audio_send_frame(self, friend_number: Tox_Friend_Number, pcm: array, sample_count: int, channels: int, sampling_rate: int) -> bool:
+        common.check_len("pcm", pcm, sample_count * channels)
         cdef const int16_t[:] pcm_arr = pcm
         cdef Toxav_Err_Send_Frame err = TOXAV_ERR_SEND_FRAME_OK
         cdef bool res = toxav_audio_send_frame(self._get(), friend_number, &pcm_arr[0], sample_count, channels, sampling_rate, &err)
@@ -133,8 +134,8 @@ cdef class ToxAV_Ptr:
 
     def video_send_frame(self, friend_number: Tox_Friend_Number, width: int, height: int, y: bytes, u: bytes, v: bytes) -> bool:
         common.check_len("y", y, width * height)
-        common.check_len("u", u, width // 2 * height // 2)
-        common.check_len("v", v, width // 2 * height // 2)
+        common.check_len("u", u, ((width // 2) * height) // 2)
+        common.check_len("v", v, ((width // 2) * height) // 2)
         cdef Toxav_Err_Send_Frame err = TOXAV_ERR_SEND_FRAME_OK
         cdef bool res = toxav_video_send_frame(self._get(), friend_number, width, height, y, u, v, &err)
         if err:
@@ -148,14 +149,14 @@ cdef class ToxAV_Ptr:
             raise ApiException(Toxav_Err_Bit_Rate_Set(err))
         return res
 
-    def handle_call(self, friend_number: int, audio_enabled: bool, video_enabled: bool) -> None: pass
+    def handle_call(self, friend_number: Tox_Friend_Number, audio_enabled: bool, video_enabled: bool) -> None: pass
 
-    def handle_call_state(self, friend_number: int, state: int) -> None: pass
+    def handle_call_state(self, friend_number: Tox_Friend_Number, state: int) -> None: pass
 
-    def handle_audio_bit_rate(self, friend_number: int, audio_bit_rate: int) -> None: pass
+    def handle_audio_bit_rate(self, friend_number: Tox_Friend_Number, audio_bit_rate: int) -> None: pass
 
-    def handle_video_bit_rate(self, friend_number: int, video_bit_rate: int) -> None: pass
+    def handle_video_bit_rate(self, friend_number: Tox_Friend_Number, video_bit_rate: int) -> None: pass
 
-    def handle_audio_receive_frame(self, friend_number: int, pcm: array, sample_count: int, channels: int, sampling_rate: int) -> None: pass
+    def handle_audio_receive_frame(self, friend_number: Tox_Friend_Number, pcm: array, sample_count: int, channels: int, sampling_rate: int) -> None: pass
 
-    def handle_video_receive_frame(self, friend_number: int, width: int, height: int, y: bytes, u: bytes, v: bytes, ystride: int, ustride: int, vstride: int) -> None: pass
+    def handle_video_receive_frame(self, friend_number: Tox_Friend_Number, width: int, height: int, y: bytes, u: bytes, v: bytes, ystride: int, ustride: int, vstride: int) -> None: pass

@@ -433,12 +433,12 @@ cdef extern from "tox/tox.h":
     ctypedef void tox_friend_typing_cb(Tox* tox, Tox_Friend_Number friend_number, bool typing, void* user_data) except *
     ctypedef void tox_group_custom_packet_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number peer_id, const uint8_t* data, size_t data_length, void* user_data) except *
     ctypedef void tox_group_custom_private_packet_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number peer_id, const uint8_t* data, size_t data_length, void* user_data) except *
-    ctypedef void tox_group_invite_cb(Tox* tox, Tox_Friend_Number friend_number, const uint8_t* invite_data, const uint8_t* group_name, void* user_data) except *
+    ctypedef void tox_group_invite_cb(Tox* tox, Tox_Friend_Number friend_number, const uint8_t* invite_data, size_t invite_data_length, const uint8_t* group_name, size_t group_name_length, void* user_data) except *
     ctypedef void tox_group_join_fail_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Join_Fail fail_type, void* user_data) except *
     ctypedef void tox_group_message_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number peer_id, Tox_Message_Type message_type, const uint8_t* message, size_t message_length, Tox_Group_Message_Id message_id, void* user_data) except *
     ctypedef void tox_group_moderation_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number source_peer_id, Tox_Group_Peer_Number target_peer_id, Tox_Group_Mod_Event mod_type, void* user_data) except *
     ctypedef void tox_group_password_cb(Tox* tox, Tox_Group_Number group_number, const uint8_t* password, size_t password_length, void* user_data) except *
-    ctypedef void tox_group_peer_exit_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number peer_id, Tox_Group_Exit_Type exit_type, const uint8_t* name, const uint8_t* part_message, void* user_data) except *
+    ctypedef void tox_group_peer_exit_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number peer_id, Tox_Group_Exit_Type exit_type, const uint8_t* name, size_t name_length, const uint8_t* part_message, size_t part_message_length, void* user_data) except *
     ctypedef void tox_group_peer_join_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number peer_id, void* user_data) except *
     ctypedef void tox_group_peer_limit_cb(Tox* tox, Tox_Group_Number group_number, uint32_t peer_limit, void* user_data) except *
     ctypedef void tox_group_peer_name_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number peer_id, const uint8_t* name, size_t name_length, void* user_data) except *
@@ -449,9 +449,8 @@ cdef extern from "tox/tox.h":
     ctypedef void tox_group_topic_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Peer_Number peer_id, const uint8_t* topic, size_t topic_length, void* user_data) except *
     ctypedef void tox_group_topic_lock_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Topic_Lock topic_lock, void* user_data) except *
     ctypedef void tox_group_voice_state_cb(Tox* tox, Tox_Group_Number group_number, Tox_Group_Voice_State voice_state, void* user_data) except *
-    ctypedef void tox_log_cb(Tox* tox, Tox_Log_Level level, const char* file, size_t file_length, uint32_t line, const char* func, const char* message, void* user_data) except *
+    ctypedef void tox_log_cb(Tox* tox, Tox_Log_Level level, const char* file, uint32_t line, const char* func, const char* message, void* user_data) except *
     ctypedef void tox_self_connection_status_cb(Tox* tox, Tox_Connection connection_status, void* user_data) except *
-    cdef uint32_t tox_conference_uid_size()
     cdef uint32_t tox_conference_id_size()
     cdef Tox_Conference_Number tox_conference_new(Tox* tox, Tox_Err_Conference_New* error)
     cdef bool tox_conference_delete(Tox* tox, Tox_Conference_Number conference_number, Tox_Err_Conference_Delete* error)
@@ -648,19 +647,6 @@ cdef extern from "tox/tox.h":
     cdef uint16_t tox_self_get_tcp_port(const Tox* self, Tox_Err_Get_Port* error)
     cdef uint32_t tox_group_get_group_list_size(const Tox* self)
     cdef void tox_group_get_group_list(const Tox* self, Tox_Group_Number* data)
-    cdef void tox_err_set_info_to_string(Tox* self, Tox_Err_Set_Info err_info_to_string)
-    cdef void tox_err_set_typing_to_string(Tox* self, Tox_Err_Set_Typing err_typing_to_string)
-    cdef void tox_err_conference_set_max_offline_to_string(Tox* self, Tox_Err_Conference_Set_Max_Offline err_conference_max_offline_to_string)
-    cdef void tox_err_group_self_name_set_to_string(Tox* self, Tox_Err_Group_Self_Name_Set err_group_self_name_to_string)
-    cdef void tox_err_group_self_status_set_to_string(Tox* self, Tox_Err_Group_Self_Status_Set err_group_self_status_to_string)
-    cdef void tox_err_group_topic_set_to_string(Tox* self, Tox_Err_Group_Topic_Set err_group_topic_to_string)
-    cdef void tox_err_group_set_password_to_string(Tox* self, Tox_Err_Group_Set_Password err_group_password_to_string)
-    cdef void tox_err_group_set_topic_lock_to_string(Tox* self, Tox_Err_Group_Set_Topic_Lock err_group_topic_lock_to_string)
-    cdef void tox_err_group_set_voice_state_to_string(Tox* self, Tox_Err_Group_Set_Voice_State err_group_voice_state_to_string)
-    cdef void tox_err_group_set_privacy_state_to_string(Tox* self, Tox_Err_Group_Set_Privacy_State err_group_privacy_state_to_string)
-    cdef void tox_err_group_set_peer_limit_to_string(Tox* self, Tox_Err_Group_Set_Peer_Limit err_group_peer_limit_to_string)
-    cdef void tox_err_group_set_ignore_to_string(Tox* self, Tox_Err_Group_Set_Ignore err_group_ignore_to_string)
-    cdef void tox_err_group_set_role_to_string(Tox* self, Tox_Err_Group_Set_Role err_group_role_to_string)
     cdef void tox_callback_self_connection_status(Tox* self, tox_self_connection_status_cb* callback)
     cdef void tox_callback_friend_name(Tox* self, tox_friend_name_cb* callback)
     cdef void tox_callback_friend_status_message(Tox* self, tox_friend_status_message_cb* callback)
@@ -694,7 +680,9 @@ cdef extern from "tox/tox.h":
     cdef void tox_callback_group_private_message(Tox* self, tox_group_private_message_cb* callback)
     cdef void tox_callback_group_custom_packet(Tox* self, tox_group_custom_packet_cb* callback)
     cdef void tox_callback_group_custom_private_packet(Tox* self, tox_group_custom_private_packet_cb* callback)
+    cdef void tox_callback_group_invite(Tox* self, tox_group_invite_cb* callback)
     cdef void tox_callback_group_peer_join(Tox* self, tox_group_peer_join_cb* callback)
+    cdef void tox_callback_group_peer_exit(Tox* self, tox_group_peer_exit_cb* callback)
     cdef void tox_callback_group_self_join(Tox* self, tox_group_self_join_cb* callback)
     cdef void tox_callback_group_join_fail(Tox* self, tox_group_join_fail_cb* callback)
     cdef void tox_callback_group_moderation(Tox* self, tox_group_moderation_cb* callback)
