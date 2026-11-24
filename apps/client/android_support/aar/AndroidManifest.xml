@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Manifest entries python-for-android's template can't add inside
+  <application>. Gradle merges this library manifest into PyTox's.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="chat.tox.pytox.support">
+
+    <uses-sdk android:minSdkVersion="29" />
+
+    <application>
+        <!-- Lets other apps open received files (Platform.open_file). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/files" />
+        </provider>
+
+        <!-- Connects after the phone starts, if the user wants to stay connected. -->
+        <receiver
+            android:name="chat.tox.pytox.support.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Declining or hanging up a call from its notification. -->
+        <receiver
+            android:name="chat.tox.pytox.support.CallReceiver"
+            android:exported="false" />
+    </application>
+</manifest>

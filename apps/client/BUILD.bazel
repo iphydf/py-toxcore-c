@@ -1,0 +1,247 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+CORE_SRCS = [
+    "pytox_client/__init__.py",
+    "pytox_client/calls.py",
+    "pytox_client/client.py",
+    "pytox_client/handover.py",
+    "pytox_client/media.py",
+    "pytox_client/media_android.py",
+    "pytox_client/media_desktop.py",
+    "pytox_client/model.py",
+    "pytox_client/nodes.py",
+    "pytox_client/platform_android.py",
+    "pytox_client/platform_base.py",
+    "pytox_client/platform_desktop.py",
+    "pytox_client/profiles.py",
+    "pytox_client/qr.py",
+    "pytox_client/service_ipc.py",
+    "pytox_client/store.py",
+    "pytox_client/ui/__init__.py",
+    "pytox_client/ui/formatting.py",
+    "pytox_client/ui/navigator.py",
+]
+
+UI_SRCS = [
+    "pytox_client/ui/app.py",
+    "pytox_client/ui/call_page.py",
+    "pytox_client/ui/chat_list.py",
+    "pytox_client/ui/chat_page.py",
+    "pytox_client/ui/file_picker.py",
+    "pytox_client/ui/group_page.py",
+    "pytox_client/ui/group_pages.py",
+    "pytox_client/ui/menu.py",
+    "pytox_client/ui/pages.py",
+    "pytox_client/ui/theme.py",
+    "pytox_client/ui/video.py",
+    "pytox_client/ui/widgets.py",
+]
+
+TEST_SRCS = [
+    "tests/client_test.py",
+    "tests/handover_test.py",
+    "tests/ipc_test.py",
+    "tests/platform_android_test.py",
+    "tests/profiles_test.py",
+    "tests/split_message_test.py",
+    "tests/store_test.py",
+    "tests/ui_test.py",
+]
+
+py_library(
+    name = "core",
+    srcs = CORE_SRCS,
+    imports = ["."],
+    tags = ["no-cross"],
+    visibility = ["//visibility:public"],
+    deps = ["//py_toxcore_c"],
+)
+
+py_library(
+    name = "ui",
+    srcs = UI_SRCS,
+    data = [
+        "assets/icon.png",
+        "assets/logo.svg",
+    ],
+    imports = ["."],
+    tags = ["no-cross"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":core",
+        "@python3_kivy",
+    ],
+)
+
+py_binary(
+    name = "client",
+    srcs = ["main.py"],
+    # The fonts with emoji, once assets/fonts/make_fonts.py has made them.
+    data = [
+        "assets/icon.png",
+        "assets/logo.svg",
+    ] + glob(
+        ["assets/fonts/*.ttf"],
+        allow_empty = True,
+    ),
+    imports = ["."],
+    main = "main.py",
+    tags = ["no-cross"],
+    visibility = ["//visibility:public"],
+    deps = [":ui"],
+)
+
+py_test(
+    name = "store_test",
+    size = "small",
+    srcs = ["tests/store_test.py"],
+    args = ["-v"],
+    main = "tests/store_test.py",
+    tags = ["no-cross"],
+    deps = [":core"],
+)
+
+py_test(
+    name = "profiles_test",
+    size = "small",
+    srcs = ["tests/profiles_test.py"],
+    args = ["-v"],
+    main = "tests/profiles_test.py",
+    tags = ["no-cross"],
+    deps = [":core"],
+)
+
+py_test(
+    name = "split_message_test",
+    size = "small",
+    srcs = ["tests/split_message_test.py"],
+    args = ["-v"],
+    main = "tests/split_message_test.py",
+    tags = ["no-cross"],
+    deps = [":core"],
+)
+
+py_test(
+    name = "handover_test",
+    size = "medium",
+    srcs = ["tests/handover_test.py"],
+    args = ["-v"],
+    main = "tests/handover_test.py",
+    tags = ["no-cross"],
+    deps = [":core"],
+)
+
+py_test(
+    name = "ipc_test",
+    size = "small",
+    srcs = ["tests/ipc_test.py"],
+    args = ["-v"],
+    main = "tests/ipc_test.py",
+    tags = ["no-cross"],
+    deps = [":core"],
+)
+
+py_test(
+    name = "client_test",
+    size = "large",
+    srcs = ["tests/client_test.py"],
+    main = "tests/client_test.py",
+    shard_count = 9,
+    tags = ["no-cross"],
+    deps = [":core"],
+)
+
+py_test(
+    name = "media_test",
+    size = "small",
+    srcs = ["tests/media_test.py"],
+    args = ["-v"],
+    main = "tests/media_test.py",
+    tags = ["no-cross"],
+    deps = [
+        ":core",
+        "@python3_kivy",
+    ],
+)
+
+py_test(
+    name = "platform_android_test",
+    size = "small",
+    srcs = ["tests/platform_android_test.py"],
+    args = ["-v"],
+    main = "tests/platform_android_test.py",
+    tags = ["no-cross"],
+    deps = [":core"],
+)
+
+py_binary(
+    name = "ui_test_bin",
+    testonly = True,
+    srcs = ["tests/ui_test.py"],
+    imports = ["."],
+    main = "tests/ui_test.py",
+    tags = ["no-cross"],
+    deps = [":ui"],
+)
+
+sh_test(
+    name = "ui_test",
+    size = "medium",
+    srcs = ["tests/ui_test.sh"],
+    args = [
+        "$(rootpath @xvfb//:bin)",
+        "$(rootpath @libgl//:libGL)",
+        "$(rootpath @mesa//:egl_vendor)",
+        "$(rootpath :ui_test_bin)",
+    ],
+    data = [
+        ":ui_test_bin",
+        "@libgl//:libGL",
+        "@mesa//:egl_vendor",
+        "@xvfb//:bin",
+    ],
+    tags = [
+        "no-cross",
+        "no-macos",
+        "no-windows",
+    ],
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+MYPY_SRCS = CORE_SRCS + UI_SRCS + [
+    "android_support/aar/build_aar.py",
+    "android_support/recipes/ctoxcore/__init__.py",
+    "android_support/recipes/libsodium/__init__.py",
+    "android_support/recipes/libvpx/__init__.py",
+    "android_support/recipes/opus/__init__.py",
+    "android_support/recipes/pytox/__init__.py",
+    "android_support/service.py",
+    "main.py",
+    "tests/media_test.py",
+] + TEST_SRCS
+
+py_test(
+    name = "mypy_test",
+    size = "medium",
+    srcs = ["//third_party/python:mypy_test.py"],
+    args = [
+        "--config-file=$(rootpath :pyproject.toml)",
+        "--extra-checks",
+        "--strict",
+        "--namespace-packages",
+        "--explicit-package-bases",
+        "--mypy-path=py_toxcore_c",
+        "--mypy-path=py_toxcore_c/apps/client",
+    ] + ["$(rootpath :%s)" % s for s in MYPY_SRCS],
+    data = MYPY_SRCS + ["pyproject.toml"],
+    main = "//third_party/python:mypy_test.py",
+    tags = [
+        "no-cross",
+        "no-windows",
+    ],
+    deps = [
+        "//py_toxcore_c",
+        "@mypy",
+    ],
+)

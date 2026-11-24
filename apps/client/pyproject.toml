@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytox-client"
+version = "0.1.0"
+description = "Cross-platform Tox chat client built with Kivy and py_toxcore_c"
+requires-python = ">=3.11"
+license = { text = "GPL-3.0-or-later" }
+dependencies = [
+    "kivy>=2.3.1",
+    "pillow>=10.0",
+    "segno>=1.6",
+    "sounddevice>=0.4",
+]
+
+[project.scripts]
+pytox = "main:main"
+
+[tool.setuptools.packages.find]
+include = ["pytox_client*"]
+
+[tool.mypy]
+python_version = "3.13"
+
+[[tool.mypy.overrides]]
+module = [
+    "kivy",
+    "kivy.*",
+    "PIL",
+    "PIL.*",
+    "segno",
+    "segno.*",
+    "sounddevice",
+    "jnius",
+    "android",
+    "android.*",
+    "pythonforandroid",
+    "pythonforandroid.*",
+    "sh",
+]
+ignore_missing_imports = true

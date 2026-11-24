@@ -1,0 +1,7 @@
+# Android build outputs (buildozer, build_aar.py).
+.buildozer/
+bin/
+android_support/aar/build/
+# Made at build time by assets/fonts/make_fonts.py.
+assets/fonts/*.ttf
+assets/fonts/LICENSE-NotoEmoji.txt
